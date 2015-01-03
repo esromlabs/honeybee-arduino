@@ -18,6 +18,7 @@ edges follow this sequence
   from|to|type|name|alias/guard
 
 */
+#define UNDEF_INT -32768
 #define NAME_SIZE  12
 #define PROCESS_SIZE  12
 
@@ -90,13 +91,19 @@ void hbumtfSerial() {
   if (state == 1 && inputString == "nodes:") {
     node_i = 0;
     next_state = 2;
+    state = -1;
     //debug("state from|" + state + "|to|" + next_state);
   }
   if (state == 2 && inputString == "edges:") {
     edge_i = 0;
     next_state = 3;
+    state = -1;
   }
-  if (state == 3 && inputString == "0_hbumtf") { next_state = 0;}
+  if (state == 3 && inputString == "0_hbumtf") {
+    next_state = 0;
+    state = -1;
+    debugAllNodes();
+  }
   // processing for states 2 and 3
   if (state == 2) {
     debug("parsing node|"+inputString);
@@ -109,15 +116,31 @@ void hbumtfSerial() {
     
     temp[0] = '\0';
     i = crawlStr(temp, i, inputString, '|');
-    nodes[node_i].io = atoi(temp);
+    if (temp == "") {
+      nodes[node_i].io = UNDEF_INT;
+    }
+    else {
+      nodes[node_i].io = atoi(temp);
+    }
+    Serial.print("io = ");
+    Serial.print(nodes[node_i].io, DEC);
+    Serial.print("|");
     
     temp[0] = '\0';
     i = crawlStr(temp, i, inputString, '|');
-    nodes[node_i].value = atoi(temp);
+    if (temp == "") {
+      nodes[node_i].value = UNDEF_INT;
+    }
+    else {
+      nodes[node_i].value = atoi(temp);
+    }
+    Serial.print("value = ");
+    Serial.print(nodes[node_i].value, DEC);
+    Serial.println("|");
     
     i = crawlStr(nodes[node_i].process, i, inputString, '|');
-
-    debug(nodes[node_i].process);
+  
+    //debug("process = " + nodes[node_i].process);
   }
   if (state == 3) {
     debug("edge|"+inputString);
@@ -135,6 +158,7 @@ int crawlStr(char *result, int i, String inputString, char stopChar) {
   //Serial.println(i, DEC);
   while (i < len) {
     if (inputString[i] == stopChar) {
+      result[j] = '\0';
       return i+1;
     }
     result[j] = inputString[i];
@@ -145,4 +169,21 @@ int crawlStr(char *result, int i, String inputString, char stopChar) {
 
 void debug(String out) {
   Serial.println(out);
+}
+
+void debugAllNodes() {
+  int i;
+  Serial.println("all nodes:");
+  for (i = 0; i < 10; i++) {
+    if (nodes[i].name[0]) {
+      Serial.print(i);
+      Serial.print("|");
+      Serial.print(nodes[i].name);
+      Serial.print("|");
+      Serial.print(nodes[i].io);
+      Serial.print("|");
+      Serial.print(nodes[i].value);
+      Serial.println("");
+    }
+  }
 }
