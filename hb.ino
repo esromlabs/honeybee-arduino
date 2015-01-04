@@ -19,7 +19,7 @@ edges follow this sequence
 
 */
 
-//#define DUBUG_BUILD true
+#define DUBUG_BUILD true
 #define UNDEF_INT -32768
 #define NAME_SIZE  12
 #define PROCESS_SIZE  12
@@ -54,9 +54,15 @@ int edge_index = 0;
 Edge edges[10];
 
 // hbumtf parser vars.
-// state 0=outside_cmd, 1=loading, 2=nodes, 3=edges 
+// state 0=outside_com, 1=loading, 2=nodes, 3=edges 
 int state = 0;
+short run_state = 0;
+boolean graph_loaded = 0;
 
+
+// message queue
+short message_count = 0;
+String message_str;
 
 void setup() {
   // initialize serial:
@@ -69,7 +75,107 @@ void setup() {
 
 void loop() {
   hbumtfSerial();
+  if (run_state) {
+    if (message_count > 0) {
+      process_message();
+    }
+    #ifdef DUBUG_BUILD
+    Serial.println(message_str);
+    delay(2000);
+    #endif
+  }
 }
+
+void process_message() {
+  String msg = deq_message();
+  int e_index;
+  int n0_index, n1_index;
+  if (msg[0] == '\0')  {
+    #ifdef DUBUG_BUILD
+    debug("no edge 1");
+    #endif
+    set_run_state(0);
+    return;
+  }
+  e_index = get_edge("msg", msg);
+  if (e_index < 0) {
+    e_index = get_edge("flo", msg);
+  }
+  if (e_index < 0) {
+    #ifdef DUBUG_BUILD
+    debug("no edge 2");
+    #endif
+    set_run_state(0);
+    return;
+  }
+  else {
+    #ifdef DUBUG_BUILD
+    debug("test of process edge (type) ");
+    debug(edges[e_index].type);
+    #endif
+    n0_index = get_node("id", edges[e_index].from);
+    n1_index = get_node("id", edges[e_index].to);
+    run_node(n1_index);
+  }
+}
+
+// kindof a cheat for now (only one place in the queue)
+void enq_message(String msg) {
+  if (message_count == 0) {
+    message_count++;
+    message_str = msg;
+  }
+}
+String deq_message() {
+  if (message_count > 0) {
+    message_count--;
+    return message_str;
+  }
+}
+
+// get edge
+int get_edge(String e_type, String msg) {
+  int i;
+  String t, n;
+  for (i = 0; i < 10; i++) {
+    t = edges[i].type;
+    n = edges[i].name;
+    if (t == e_type && n == msg) {
+      return i;
+    }
+  }
+  return -1; 
+}
+
+// get node
+int get_node(String field, int id) {
+  return id;
+}
+
+// run_node(n1);
+void run_node(int n_index) {
+  #ifdef DUBUG_BUILD
+  debug("test of run_node");
+  debug(nodes[n_index].name);
+  #endif
+}
+
+void set_run_state(short new_state) {
+  short previous_state = run_state;
+  if (graph_loaded) {
+    run_state = new_state;
+  }
+  // next line... jsut for fun (remove later ;)
+  //digitalWrite(led, (int)run_state);
+  if (!previous_state && run_state) { // rising edge
+    enq_message("graph_init");
+
+    #ifdef DUBUG_BUILD
+    debug("sent msg graph_init");
+    #endif
+  }
+}
+
 
 /*
   hbumtfSerial
@@ -107,6 +213,12 @@ void hbumtfSerial() {
     if (inputString == "rfi") {
       com_rfi();
     }
+    if (inputString == "set run_state 1") {
+      set_run_state(1);
+    }
+    if (inputString == "set run_state 0") {
+      set_run_state(0);
+    }
   }
   if (state == 1 && inputString == NODES_HBG) {
     next_state = 2;
@@ -119,6 +231,7 @@ void hbumtfSerial() {
   if (state == 3 && inputString == END_HBG) {
     next_state = 0;
     state = -1;
+    graph_loaded = 1;
     com_graph();
   }
   // processing for states 2 and 3
@@ -246,6 +359,10 @@ void com_rfi() {
   Serial.println(HB_VERSION);
   Serial.print("Serial state: ");
   Serial.println(state);
+  Serial.print("Graph loaded: ");
+  Serial.println(graph_loaded);  
+  Serial.print("Run state: ");
+  Serial.println(run_state);
   com_graph();
 }
 
