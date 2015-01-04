@@ -1,6 +1,5 @@
+#define HB_VERSION "HoneyBee Arduino interpreter version 0.0.1"
 /*
- HB interpretor
-
 outline of HoneyBee UltraMini TransmitionFormat version 0.0.1 
 1_hbumtf_v0
 nodes:
@@ -29,13 +28,12 @@ typedef struct
   int value;
   char process[PROCESS_SIZE];
 } Node;
-// Node n;
  
 // Pin 13 has an LED connected on most Arduino boards.
 // give it a name:
 int led = 13;
 String inputString = "";         // a string to hold incoming data
-boolean stringComplete = false;  // whether the string is complete
+boolean stringComplete = false;  // serial inputString is complete
 
 boolean intComplete = false;
 int node_index = 0;
@@ -87,6 +85,11 @@ void hbumtfSerial() {
   }
   else if (state == 0) {
     debug("outside_cmd|"+inputString);
+    if (inputString == "rfi") {
+      Serial.println(HB_VERSION);
+      Serial.println(state);
+      debugAllNodes();
+    }
   }
   if (state == 1 && inputString == "nodes:") {
     node_i = 0;
@@ -186,4 +189,6 @@ void debugAllNodes() {
       Serial.println("");
     }
   }
+  
+
 }
