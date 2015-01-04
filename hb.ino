@@ -78,11 +78,11 @@ void loop() {
   if (run_state) {
     if (message_count > 0) {
       process_message();
+      #ifdef DUBUG_BUILD
+      Serial.println(message_str);
+      delay(2000);
+      #endif
     }
-    #ifdef DUBUG_BUILD
-    Serial.println(message_str);
-    delay(2000);
-    #endif
   }
 }
 
@@ -97,9 +97,9 @@ void process_message() {
     set_run_state(0);
     return;
   }
-  e_index = get_edge("msg", msg);
+  e_index = get_edge("msg", msg, -1);
   if (e_index < 0) {
-    e_index = get_edge("flo", msg);
+    e_index = get_edge("flo", msg, -1);
   }
   if (e_index < 0) {
     #ifdef DUBUG_BUILD
@@ -134,13 +134,13 @@ String deq_message() {
 }
 
 // get edge
-int get_edge(String e_type, String msg) {
+int get_edge(String e_type, String msg, int from) {
   int i;
   String t, n;
   for (i = 0; i < 10; i++) {
     t = edges[i].type;
     n = edges[i].name;
-    if (t == e_type && n == msg) {
+    if (t == e_type && (n == msg || (msg == "*" && edges[i].from == from))) {
       return i;
     }
   }
@@ -155,9 +155,41 @@ int get_node(String field, int id) {
 // run_node(n1);
 void run_node(int n_index) {
   #ifdef DUBUG_BUILD
-  debug("test of run_node");
+  debug("run_node named");
   debug(nodes[n_index].name);
   #endif
+  
+  // get, process, set transition
+  //nodes[n_index].value = run_get_edges(n_index);
+  //run_process();
+  run_set_edges(n_index);
+  run_transition();
+  
+}
+
+// ToDo handle more than one set edge!
+void run_set_edges(int n_index) {
+  int e_i = get_edge("set", "*", n_index);
+  if (e_i >= 0) {
+    int from_n_i = edges[e_i].from;
+    int to_n_i = edges[e_i].to;
+    #ifdef DUBUG_BUILD
+    Serial.print("set edge ");
+    Serial.print(e_i, DEC);
+    Serial.println(" fired");
+    #endif
+    // set edge transfers the value
+    nodes[to_n_i].value = nodes[from_n_i].value;
+    // ToDo better identification of an IO attribute maybe is_io() or get_io_attr().
+    if (nodes[to_n_i].io != UNDEF_INT) {
+      // ToDo stop assuming digitalWrite(...)
+      digitalWrite(nodes[to_n_i].io, nodes[to_n_i].value);
+    }
+  }
+}
+
+void run_transition() {
+  // put a message in the queue
 }
 
 void set_run_state(short new_state) {
@@ -165,7 +197,7 @@ void set_run_state(short new_state) {
   if (graph_loaded) {
     run_state = new_state;
   }
-  // next line... jsut for fun (remove later ;)
+  // next line... just for fun (remove later ;)
   //digitalWrite(led, (int)run_state);
   if (!previous_state && run_state) { // rising edge
     enq_message("graph_init");
