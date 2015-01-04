@@ -1,7 +1,7 @@
 #define HB_VERSION "HoneyBee Arduino interpreter version 0.0.1"
-// outline of HoneyBee UltraMini TransmitionFormat version 0.0.1 
+// outline of HoneyBee UltraMini TransmissionFormat version 0.0.1 
 #define START_HBG "1_hbumtf_v0"
-#define NODES_HBG "nodes:" 
+#define NODES_HBG "nodes:"
 /*
   0|env|||
   1|high||1|
@@ -129,6 +129,34 @@ void hbumtfSerial() {
     #ifdef DUBUG_BUILD
     debug("parsing node|"+inputString);
     #endif
+    parse_node(inputString);
+  }
+  if (state == 3) {
+    #ifdef DUBUG_BUILD
+    debug("edge|"+inputString);
+    #endif
+  }
+  if (next_state >= 0) {
+    state = next_state;
+  }
+  inputString = "";
+}
+
+int crawlStr(char *result, int i, String inputString, char stopChar) {
+  const unsigned int len = inputString.length();
+  int j = 0;
+  while (i < len) {
+    if (inputString[i] == stopChar) {
+      result[j] = '\0';
+      return i+1;
+    }
+    result[j] = inputString[i];
+    i++;
+    j++;
+  }
+}
+
+void parse_node (in_str) {
     int i = 0;
     char temp[10];
     i = crawlStr(temp, i, inputString, '|');
@@ -165,30 +193,7 @@ void hbumtfSerial() {
     #endif
     
     i = crawlStr(nodes[node_i].process, i, inputString, '|');
-  }
-  if (state == 3) {
-    #ifdef DUBUG_BUILD
-    debug("edge|"+inputString);
-    #endif
-  }
-  if (next_state >= 0) {
-    state = next_state;
-  }
-  inputString = "";
 }
-
-int crawlStr(char *result, int i, String inputString, char stopChar) {
-  const unsigned int len = inputString.length();
-  int j = 0;
-  while (i < len) {
-    if (inputString[i] == stopChar) {
-      result[j] = '\0';
-      return i+1;
-    }
-    result[j] = inputString[i];
-    i++;
-    j++;
-  }
 }
 
 #ifdef DUBUG_BUILD
@@ -240,3 +245,4 @@ void com_graph() {
   }
   Serial.println(END_HBG);
 }
+
