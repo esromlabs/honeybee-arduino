@@ -8,14 +8,14 @@
   2|led|13|| */
 #define EDGES_HBG "edges:" 
 /*
-  0|1|msg|graph_init|
-  1|2|set|| */
+  0|0|1|msg|graph_init|
+  1|1|2|set|| */
 #define END_HBG "0_hbumtf"
 /*
 nodes follow this sequence
   id|name|io|value|process
 edges follow this sequence
-  from|to|type|name|alias/guard
+  id|from|to|type|name|alias/guard
 
 */
 
@@ -56,7 +56,6 @@ Edge edges[10];
 // hbumtf parser vars.
 // state 0=outside_cmd, 1=loading, 2=nodes, 3=edges 
 int state = 0;
-int node_i, edge_i;
 
 
 void setup() {
@@ -110,12 +109,10 @@ void hbumtfSerial() {
     }
   }
   if (state == 1 && inputString == NODES_HBG) {
-    node_i = 0;
     next_state = 2;
     state = -1;
   }
   if (state == 2 && inputString == EDGES_HBG) {
-    edge_i = 0;
     next_state = 3;
     state = -1;
   }
@@ -135,6 +132,7 @@ void hbumtfSerial() {
     #ifdef DUBUG_BUILD
     debug("edge|"+inputString);
     #endif
+    parse_edge(inputString);
   }
   if (next_state >= 0) {
     state = next_state;
@@ -156,16 +154,17 @@ int crawlStr(char *result, int i, String inputString, char stopChar) {
   }
 }
 
-void parse_node (in_str) {
+void parse_node(String in_str) {
     int i = 0;
+    int node_i;
     char temp[10];
-    i = crawlStr(temp, i, inputString, '|');
+    i = crawlStr(temp, i, in_str, '|');
     node_i = atoi(temp);
     
-    i = crawlStr(nodes[node_i].name, i, inputString, '|');
+    i = crawlStr(nodes[node_i].name, i, in_str, '|');
     
     temp[0] = '\0';
-    i = crawlStr(temp, i, inputString, '|');
+    i = crawlStr(temp, i, in_str, '|');
     if (temp == "") {
       nodes[node_i].io = UNDEF_INT;
     }
@@ -179,7 +178,7 @@ void parse_node (in_str) {
     #endif
     
     temp[0] = '\0';
-    i = crawlStr(temp, i, inputString, '|');
+    i = crawlStr(temp, i, in_str, '|');
     if (temp == "") {
       nodes[node_i].value = UNDEF_INT;
     }
@@ -192,9 +191,49 @@ void parse_node (in_str) {
     Serial.println("|");
     #endif
     
-    i = crawlStr(nodes[node_i].process, i, inputString, '|');
+    i = crawlStr(nodes[node_i].process, i, in_str, '|');
 }
+
+void parse_edge(String in_str) {
+    int i = 0;
+    int edge_i;
+    char temp[10];
+    i = crawlStr(temp, i, in_str, '|');
+    edge_i = atoi(temp);
+    
+    temp[0] = '\0';
+    i = crawlStr(temp, i, in_str, '|');
+    if (temp == "") {
+      edges[edge_i].from = UNDEF_INT;
+    }
+    else {
+      edges[edge_i].from = atoi(temp);
+    }
+    #ifdef DUBUG_BUILD
+    Serial.print("from = ");
+    Serial.print(edges[edge_i].from, DEC);
+    Serial.print("|");
+    #endif
+    
+    temp[0] = '\0';
+    i = crawlStr(temp, i, in_str, '|');
+    if (temp == "") {
+      edges[edge_i].to = UNDEF_INT;
+    }
+    else {
+      edges[edge_i].to = atoi(temp);
+    }
+    #ifdef DUBUG_BUILD
+    Serial.print("to = ");
+    Serial.print(edges[edge_i].to, DEC);
+    Serial.println("|");
+    #endif
+
+    i = crawlStr(edges[edge_i].type, i, in_str, '|');    
+    i = crawlStr(edges[edge_i].name, i, in_str, '|');    
+    i = crawlStr(edges[edge_i].guard, i, in_str, '|');
 }
+
 
 #ifdef DUBUG_BUILD
 void debug(String out) {
@@ -245,4 +284,3 @@ void com_graph() {
   }
   Serial.println(END_HBG);
 }
-
