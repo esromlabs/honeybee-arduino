@@ -87,33 +87,46 @@ void loop() {
 }
 
 void process_message() {
-  String msg = deq_message();
-  int e_index;
+  String msg = deq_message(); // example "msg:graph_init"
+  String e_type = msg.substring(0, 3);
+  String e_part2 = msg.substring(4);
+  char e2[12];
+  int e_index = -1;
   int n0_index, n1_index;
+  #ifdef DUBUG_BUILD
+  debug("pm");
+  debug(e_type);
+  debug(e_part2);
+  #endif
   if (msg[0] == '\0')  {
     #ifdef DUBUG_BUILD
-    debug("no edge 1");
+    debug("no msg in pm");
     #endif
     set_run_state(0);
     return;
   }
-  e_index = get_edge("msg", msg, -1);
-  if (e_index < 0) {
-    e_index = get_edge("flo", msg, -1);
+  if (e_type == "msg") {
+    e_part2.toCharArray(e2, 11);
+    e_index = get_edge("msg", e2, -1);
+  }
+  if (e_type == "flo") {
+    e_part2.toCharArray(e2, 11);
+    n0_index = atoi(e2);
+    e_index = get_edge("flo", "from", n0_index);
   }
   if (e_index < 0) {
     #ifdef DUBUG_BUILD
-    debug("no edge 2");
+    debug("no edge in pm");
     #endif
     set_run_state(0);
     return;
   }
   else {
     #ifdef DUBUG_BUILD
-    debug("test of process edge (type) ");
+    debug("pm processing edge (type) ");
     debug(edges[e_index].type);
     #endif
-    n0_index = get_node("id", edges[e_index].from);
+    //n0_index = get_node("id", edges[e_index].from);
     n1_index = get_node("id", edges[e_index].to);
     run_node(n1_index);
   }
@@ -125,12 +138,25 @@ void enq_message(String msg) {
     message_count++;
     message_str = msg;
   }
+  #ifdef DUBUG_BUILD
+  else {
+    debug("enq_message count error");
+    debug(msg);
+  }
+  #endif
+  
 }
 String deq_message() {
   if (message_count > 0) {
     message_count--;
     return message_str;
   }
+  #ifdef DUBUG_BUILD
+  else {
+    debug("deq_message count error");
+    Serial.println(message_count);
+  }
+  #endif
 }
 
 // get edge
@@ -140,8 +166,11 @@ int get_edge(String e_type, String msg, int from) {
   for (i = 0; i < 10; i++) {
     t = edges[i].type;
     n = edges[i].name;
-    if (t == e_type && (n == msg || (msg == "*" && edges[i].from == from))) {
-      return i;
+    if (t == e_type) {
+      if ((n == msg || (msg == "*" && edges[i].from == from)) ||
+          (msg == "from" && edges[i].from == from)) {
+        return i;
+      }
     }
   }
   return -1; 
@@ -163,7 +192,7 @@ void run_node(int n_index) {
   //nodes[n_index].value = run_get_edges(n_index);
   //run_process();
   run_set_edges(n_index);
-  run_transition();
+  run_transition(n_index);
   
 }
 
@@ -188,8 +217,30 @@ void run_set_edges(int n_index) {
   }
 }
 
-void run_transition() {
-  // put a message in the queue
+void run_transition(int n_index) {
+  int e_i = get_edge("flo", "from", n_index);
+  char itoa_buff[7];
+  if (e_i >= 0) {
+    int from_n_i = edges[e_i].from;
+    #ifdef DUBUG_BUILD
+    Serial.print("flo edge ");
+    Serial.print(e_i, DEC);
+    Serial.println(" enqueued");
+    #endif
+    // put a message in the queue
+    itoa(from_n_i, itoa_buff, 10);
+    String message = "flo:";
+    message += itoa_buff;
+    enq_message(message);
+  }
+  else {
+    set_run_state(0);
+    #ifdef DUBUG_BUILD
+    Serial.print("no transition form ");
+    Serial.print(n_index, DEC);
+    Serial.println(" party is over.");
+    #endif
+  }
 }
 
 void set_run_state(short new_state) {
@@ -197,10 +248,8 @@ void set_run_state(short new_state) {
   if (graph_loaded) {
     run_state = new_state;
   }
-  // next line... just for fun (remove later ;)
-  //digitalWrite(led, (int)run_state);
   if (!previous_state && run_state) { // rising edge
-    enq_message("graph_init");
+    enq_message("msg:graph_init");
 
     #ifdef DUBUG_BUILD
     debug("sent msg graph_init");
