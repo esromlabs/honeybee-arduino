@@ -43,22 +43,20 @@ typedef struct
  
 // Pin 13 has an LED connected on most Arduino boards.
 // give it a name:
-int led = 13;
+//int led = 13;
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // serial inputString is complete
 
-boolean intComplete = false;
-int node_index = 0;
 Node nodes[10];
-int edge_index = 0;
 Edge edges[10];
 
 // hbumtf parser vars.
 // state 0=outside_com, 1=loading, 2=nodes, 3=edges 
 int state = 0;
+// run_state 0=not_running, 1=running, 2=on_hold
 short run_state = 0;
 boolean graph_loaded = 0;
-
+boolean run_noisy = 0; 
 
 // message queue
 short message_count = 0;
@@ -69,7 +67,7 @@ void setup() {
   Serial.begin(9600);
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
-  pinMode(led, OUTPUT);     
+  //pinMode(led, OUTPUT);     
 
 }
 
@@ -81,6 +79,14 @@ void loop() {
       #ifdef DUBUG_BUILD
       Serial.println(message_str);
       delay(2000);
+      #endif
+    }
+    else {
+      set_run_state(0);
+      #ifdef DUBUG_BUILD
+      Serial.print("no messages in queue");
+      Serial.print(", party is over. run_state: ");
+      Serial.println(run_state);
       #endif
     }
   }
@@ -98,13 +104,6 @@ void process_message() {
   debug(e_type);
   debug(e_part2);
   #endif
-  if (msg[0] == '\0')  {
-    #ifdef DUBUG_BUILD
-    debug("no msg in pm");
-    #endif
-    set_run_state(0);
-    return;
-  }
   if (e_type == "msg") {
     e_part2.toCharArray(e2, 11);
     e_index = get_edge("msg", e2, -1);
@@ -232,14 +231,6 @@ void run_transition(int n_index) {
     String message = "flo:";
     message += itoa_buff;
     enq_message(message);
-  }
-  else {
-    set_run_state(0);
-    #ifdef DUBUG_BUILD
-    Serial.print("no transition form ");
-    Serial.print(n_index, DEC);
-    Serial.println(" party is over.");
-    #endif
   }
 }
 
