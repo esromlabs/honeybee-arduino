@@ -56,7 +56,7 @@ int state = 0;
 // run_state 0=not_running, 1=running, 2=on_hold
 short run_state = 0;
 boolean graph_loaded = 0;
-boolean run_noisy = 0; 
+int run_delay = 0; 
 
 // message queue
 short message_count = 0;
@@ -126,6 +126,13 @@ void process_message() {
     debug(edges[e_index].type);
     #endif
     //n0_index = get_node("id", edges[e_index].from);
+    if (run_delay) {
+      Serial.print("buz: ");
+      Serial.print(edges[e_index].type);
+      Serial.print(" edge ");
+      Serial.println(e_index);
+      delay(run_delay);
+    }
     n1_index = get_node("id", edges[e_index].to);
     run_node(n1_index);
   }
@@ -186,12 +193,23 @@ void run_node(int n_index) {
   debug("run_node named");
   debug(nodes[n_index].name);
   #endif
+  if (run_delay) {
+    Serial.print("buz: start node ");
+    Serial.println(n_index);
+    delay(run_delay);
+  }
   
   // get, process, set transition
   //nodes[n_index].value = run_get_edges(n_index);
+  run_get_edges(n_index);
   //run_process();
   run_set_edges(n_index);
   run_transition(n_index);
+  if (run_delay) {
+    Serial.print("buz: end node ");
+    Serial.println(n_index);
+    delay(run_delay);
+  }
   
 }
 
@@ -206,6 +224,11 @@ void run_set_edges(int n_index) {
     Serial.print(e_i, DEC);
     Serial.println(" fired");
     #endif
+    if (run_delay) {
+      Serial.print("buz: set edge ");
+      Serial.println(e_i);
+      delay(run_delay);
+    }
     // set edge transfers the value
     nodes[to_n_i].value = nodes[from_n_i].value;
     // ToDo better identification of an IO attribute maybe is_io() or get_io_attr().
@@ -213,6 +236,32 @@ void run_set_edges(int n_index) {
       // ToDo stop assuming digitalWrite(...)
       digitalWrite(nodes[to_n_i].io, nodes[to_n_i].value);
     }
+  }
+}
+
+// ToDo handle more than one get edge!
+void run_get_edges(int n_index) {
+  int e_i = get_edge("get", "from", n_index);
+  if (e_i >= 0) {
+    int from_n_i = edges[e_i].from;
+    int to_n_i = edges[e_i].to;
+    #ifdef DUBUG_BUILD
+    Serial.print("get edge ");
+    Serial.print(e_i, DEC);
+    Serial.println(" fired");
+    #endif
+    if (run_delay) {
+      Serial.print("buz: get edge ");
+      Serial.println(e_i);
+      delay(run_delay);
+    }
+    // ToDo better identification of an IO attribute maybe is_io() or get_io_attr().
+    if (nodes[to_n_i].io != UNDEF_INT) {
+      // ToDo stop assuming digitalRead(...)
+      nodes[to_n_i].value = digitalRead(nodes[to_n_i].io);
+    }
+    // set edge transfers the value
+    nodes[from_n_i].value = nodes[to_n_i].value;
   }
 }
 
