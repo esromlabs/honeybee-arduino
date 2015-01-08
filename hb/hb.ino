@@ -19,10 +19,10 @@ edges follow this sequence
 
 */
 
-#define DUBUG_BUILD true
+//#define DUBUG_BUILD true
 #define UNDEF_INT -32768
 #define NAME_SIZE  12
-#define PROCESS_SIZE  12
+#define PROCESS_SIZE  16
 
 typedef struct
 {
@@ -56,7 +56,7 @@ int state = 0;
 // run_state 0=not_running, 1=running, 2=on_hold
 short run_state = 0;
 boolean graph_loaded = 0;
-int run_delay = 0; 
+int run_delay = 500; 
 
 // message queue
 short message_count = 0;
@@ -202,7 +202,7 @@ void run_node(int n_index) {
   // get, process, set transition
   //nodes[n_index].value = run_get_edges(n_index);
   run_get_edges(n_index);
-  //run_process();
+  run_process(n_index);
   run_set_edges(n_index);
   run_transition(n_index);
   if (run_delay) {
@@ -210,7 +210,48 @@ void run_node(int n_index) {
     Serial.println(n_index);
     delay(run_delay);
   }
-  
+}
+
+// ToDo handle more than one get edge!
+void run_get_edges(int n_index) {
+  int e_i = get_edge("get", "from", n_index);
+  if (e_i >= 0) {
+    int from_n_i = edges[e_i].from;
+    int to_n_i = edges[e_i].to;
+    #ifdef DUBUG_BUILD
+    Serial.print("get edge ");
+    Serial.print(e_i, DEC);
+    Serial.println(" fired");
+    #endif
+    // ToDo better identification of an IO attribute maybe is_io() or get_io_attr().
+    if (nodes[to_n_i].io != UNDEF_INT) {
+      // ToDo stop assuming digitalRead(...)
+      nodes[to_n_i].value = digitalRead(nodes[to_n_i].io);
+    }
+    // set edge transfers the value
+    nodes[from_n_i].value = nodes[to_n_i].value;
+    if (run_delay) {
+      Serial.print("buz: get edge ");
+      Serial.print(e_i);
+      Serial.print(" value ");
+      Serial.println(nodes[from_n_i].value);
+      delay(run_delay);
+    }
+  }
+}
+
+void run_process(int n_i) {
+  // this is really hard coded, with no smarts at all, for now.
+  if (nodes[n_i].process == "value=!value") {
+    nodes[n_i].value = !nodes[n_i].value;
+    if (run_delay) {
+      Serial.print("buz: node process value ");
+      Serial.print(nodes[n_i].value);
+      Serial.print(" at id ");
+      Serial.println(n_i);
+      delay(run_delay);
+    }
+  }
 }
 
 // ToDo handle more than one set edge!
@@ -236,32 +277,6 @@ void run_set_edges(int n_index) {
       // ToDo stop assuming digitalWrite(...)
       digitalWrite(nodes[to_n_i].io, nodes[to_n_i].value);
     }
-  }
-}
-
-// ToDo handle more than one get edge!
-void run_get_edges(int n_index) {
-  int e_i = get_edge("get", "from", n_index);
-  if (e_i >= 0) {
-    int from_n_i = edges[e_i].from;
-    int to_n_i = edges[e_i].to;
-    #ifdef DUBUG_BUILD
-    Serial.print("get edge ");
-    Serial.print(e_i, DEC);
-    Serial.println(" fired");
-    #endif
-    if (run_delay) {
-      Serial.print("buz: get edge ");
-      Serial.println(e_i);
-      delay(run_delay);
-    }
-    // ToDo better identification of an IO attribute maybe is_io() or get_io_attr().
-    if (nodes[to_n_i].io != UNDEF_INT) {
-      // ToDo stop assuming digitalRead(...)
-      nodes[to_n_i].value = digitalRead(nodes[to_n_i].io);
-    }
-    // set edge transfers the value
-    nodes[from_n_i].value = nodes[to_n_i].value;
   }
 }
 
@@ -500,6 +515,8 @@ void com_graph() {
       Serial.print(nodes[i].io);
       Serial.print("|");
       Serial.print(nodes[i].value);
+      Serial.print("|");
+      Serial.print(nodes[i].process);
       Serial.println("");
     }
   }
