@@ -242,10 +242,14 @@ void run_get_edges(int n_index) {
 
 void run_process(int n_i) {
   // this is really hard coded, with no smarts at all, for now.
-  if (nodes[n_i].process == "value=!value") {
+  String proc = nodes[n_i].process;
+  if (proc == "value=!value") {
     nodes[n_i].value = !nodes[n_i].value;
     if (run_delay) {
-      Serial.print("buz: node process value ");
+      Serial.print("buz: node process ");
+      Serial.print(" '");
+      Serial.print(nodes[n_i].process);
+      Serial.print("' value");
       Serial.print(nodes[n_i].value);
       Serial.print(" at id ");
       Serial.println(n_i);
@@ -267,7 +271,9 @@ void run_set_edges(int n_index) {
     #endif
     if (run_delay) {
       Serial.print("buz: set edge ");
-      Serial.println(e_i);
+      Serial.print(e_i);
+      Serial.print(" value ");
+      Serial.println(nodes[from_n_i].value);
       delay(run_delay);
     }
     // set edge transfers the value
