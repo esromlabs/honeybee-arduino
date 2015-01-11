@@ -59,8 +59,11 @@ boolean graph_loaded = 0;
 int run_delay = 500; 
 
 // message queue
+#define MQ_SIZE  5
 short message_count = 0;
-String message_str;
+short message_in = 0;
+short message_out = 0;
+String messages[MQ_SIZE];
 
 void setup() {
   // initialize serial:
@@ -138,31 +141,32 @@ void process_message() {
   }
 }
 
-// kindof a cheat for now (only one place in the queue)
 void enq_message(String msg) {
-  if (message_count == 0) {
+  if (message_count < MQ_SIZE) {
+    message_in = (message_in + 1) % MQ_SIZE;
     message_count++;
-    message_str = msg;
+    messages[message_in] = msg;
   }
   #ifdef DUBUG_BUILD
   else {
-    debug("enq_message count error");
-    debug(msg);
+    Serial.print("enq_message count error");
+    Serial.println(msg);
   }
   #endif
-  
 }
 String deq_message() {
   if (message_count > 0) {
     message_count--;
-    return message_str;
+    message_out = (message_out + 1) % MQ_SIZE;
+    return messages[message_out];
   }
   #ifdef DUBUG_BUILD
   else {
-    debug("deq_message count error");
+    Serial.print("deq_message count error");
     Serial.println(message_count);
   }
   #endif
+  return "";
 }
 
 // get edge
