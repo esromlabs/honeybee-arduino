@@ -1,1 +1,14 @@
 // ceu example target for compiler
+event int n;      // an event carrying an int
+
+var int c = 0;
+var int n_id = 0;
+par do
+    loop do        // a simple loop that
+        n_id = await n;   // when 'n' occurs
+        _printf("node id is %d", n_id);
+        c = c + 1; // increments 'c'
+    end
+with
+  emit n => 1;
+end
