@@ -3,15 +3,27 @@ event void n001;      // an event starting node id 001
 output int  n002;      // an event starting node id 001
 event int e001_get;      // an event for getting (edge 001)
 event int e001_got;      // an event for returning (edge 001)
+event int e002_get;
+event int e002_got;
+event int e003_get;
+event int e003_got;
 
 par do
-    loop do        // a simple loop that
-        await n001;   // when 'n' occurs
-        _printf("node id is %d", n_id);
-        emit e001_get;
-        (name, value) = await e001_got;
-        c = c + 1; // increments 'c'
-    end
+    await n001;   // when 'n' occurs
+    _printf("node id is %d", n_id);
+    emit e001_get;
+    (name, value) = await e001_got;
+    c = c + 1; // increments 'c'
 with
-  emit n => 1;
+    await n002;   // when 'n' occurs
+    _printf("node id is %d", n_id);
+    emit e001_get;
+    (name, value) = await e001_got;
+    c = c + 1; // increments 'c'
+with
+    await e002;   // when 'n' occurs
+    _printf("node id is %d", n_id);
+    emit e001_get;
+    (name, value) = await e001_got;
+    c = c + 1; // increments 'c'
 end
