@@ -7,23 +7,33 @@ event int e002_get;
 event int e002_got;
 event int e003_get;
 event int e003_got;
+event int e004_set;
+event int e005_flo;
 
 par do
-    await n001;   // when 'n' occurs
-    _printf("node id is %d", n_id);
+    await n001;   // when 'n001' occurs
+    _printf("node id is %d", 1);
     emit e001_get;
     (name, value) = await e001_got;
+    // do any processing here
     c = c + 1; // increments 'c'
+    // set edges fire
+    
+    // transition to next 
+    
 with
     await n002;   // when 'n' occurs
-    _printf("node id is %d", n_id);
+    _printf("node id is %d", 2);
     emit e001_get;
     (name, value) = await e001_got;
+    // do any processing here
     c = c + 1; // increments 'c'
+    // set edges fire
+    
+    // transition to next 
+    
 with
-    await e002;   // when 'n' occurs
-    _printf("node id is %d", n_id);
-    emit e001_get;
-    (name, value) = await e001_got;
-    c = c + 1; // increments 'c'
+    await e001_get; // get request edge
+    _printf("get id is %d", n_id);
+    emit e001_gott;
 end
