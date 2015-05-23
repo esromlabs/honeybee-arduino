@@ -1,0 +1,7 @@
+// bee-duino interpreter
+// test compile (transpile) target
+//   see the matched transpile source compile_source_counter_2.bee (bee-graph)
+
+// graph structure (nodes and edges)
+
+// interpreter of the graph.
