@@ -1,7 +1,29 @@
 // bee-duino interpreter
 // test compile (transpile) target
 //   see the matched transpile source compile_source_counter_2.bee (bee-graph)
+var int event edge;
+var int event return_edge;
+var int event node;
 
 // graph structure (nodes and edges)
 
+
 // interpreter of the graph.
+par do
+  loop do
+    var int edge_i = await edge;
+    // look up edge data
+    
+    // evaluate any guard
+    
+    // if guard allows fire the edge.
+  end
+with
+  loop do
+    var int node_i = await node;
+    // look up this nodes data
+    
+    // get, process, set and transition
+    
+  end
+end  
