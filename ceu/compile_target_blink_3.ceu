@@ -1,0 +1,74 @@
+// compile_target_blink_3.ceu
+
+event int edge;
+event int edge_return;
+event int node;
+
+native _get_edge(), _get_node(), _edgestruct, _nodestruct;
+native do
+    // boilerplate code generic to any graph
+    int get_node (int i) {
+        return nodes[i];
+    }
+    int get_edge (int i) {
+        return edges[i];
+    }
+
+    typedef struct {
+        char* str_data[32];
+        int int_data;
+        int (*ptf)(int);
+        char n_type;
+    } nodestruct;
+
+    typedef struct {
+        s8 from;
+        s8 to;
+        char e_type;
+    } edgestruct;
+
+    // generated from graph structure
+    int node001fn(int i) {
+        int result = 0;
+        // process step 1
+        result = 1;
+        // process step 2
+        await (nodes[i].int_data)ms;
+        return result;
+    }
+    int node002fn(int i) {
+        int result = 0;
+        // process step 1
+        result = 0;
+        // process step 2
+        await (nodes[i].int_data)ms;
+        return result;
+    }
+end
+
+// generated section from graph structure
+var _nodestruct nodes[4];
+var _nodestruct edges[6];
+//nodes
+nodes[0].n_type = 'd';
+nodes[0].data = 250;
+nodes[1].n_type = 'p';
+nodes[1].ptf = _node001fn;
+nodes[2].n_type = 'p';
+nodes[2].ptf = _node002fn;
+nodes[3].n_type = 'o';
+nodes[3].ptf = _node003fn;
+//edges
+
+
+
+par do
+    loop do
+        i = await edge;
+    end
+with
+    loop do
+        await 250ms;
+        emit e => i+1;  // triggers 'e'
+    end
+end

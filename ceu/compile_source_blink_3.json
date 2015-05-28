@@ -1,0 +1,17 @@
+{"graph":{"name":"blink_arduino_3","template":"<button id='start_button'>Say Hello</button><div class='greeting'></div>"},
+ "nodes":[
+  {"id":"n3","name":"delay","data":{"delay":250}},
+  {"name":"0","process":["this.LED = 0;","wait(delay);"],"id":"n1"},
+  {"name":"selector","io":{"selector":"LED"},"id":"n0"},
+  {"id":"n2","name":"1","process":["this.LED = 1;","wait(delay);"]}
+ ],
+ "edges":[
+  ["n2","n0","set","","",0],
+  ["n1","n0","set","","",1],
+  ["n2","n1","flo","","",2],
+  ["n1","n2","flo","","",3],
+  ["n2","n3","get","delay","",4],
+  ["n1","n3","get","delay","",5]
+ ],
+ "views":[{"name":"first","nodes":{"n3":{"position":{"x":290,"y":36},"width":80},"n1":{"position":{"x":361,"y":125},"width":80},"n0":{"position":{"x":290,"y":221},"width":80},"n2":{"position":{"x":218,"y":125},"width":80}},"edges":{}}]
+}
