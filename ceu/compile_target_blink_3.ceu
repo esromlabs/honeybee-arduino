@@ -47,8 +47,8 @@ native do
 end
 
 // generated section from graph structure
-var _nodestruct nodes[4];
-var _nodestruct edges[6];
+var _nodestruct[4] nodes;
+var _edgestruct[6] edges;
 //nodes
 nodes[0].n_type = 'd';
 nodes[0].data = 250;
@@ -64,11 +64,11 @@ nodes[3].ptf = _node003fn;
 
 par do
     loop do
-        i = await edge;
+        var int edge_id = await edge;
     end
 with
     loop do
         await 250ms;
-        emit e => i+1;  // triggers 'e'
+        emit edge => 1;  // triggers 'edge'
     end
 end
