@@ -6,69 +6,90 @@ event int node;
 
 native _get_edge(), _get_node(), _edgestruct, _nodestruct;
 native do
-    // boilerplate code generic to any graph
-    int get_node (int i) {
-        return nodes[i];
-    }
-    int get_edge (int i) {
-        return edges[i];
-    }
+  typedef struct {
+    char* str_data[32];
+    int int_data;
+    int (*ptf)(int);
+    char n_type;
+  } nodestruct;
 
-    typedef struct {
-        char* str_data[32];
-        int int_data;
-        int (*ptf)(int);
-        char n_type;
-    } nodestruct;
+  typedef struct {
+    s8 from;
+    s8 to;
+    char e_type;
+  } edgestruct;
 
-    typedef struct {
-        s8 from;
-        s8 to;
-        char e_type;
-    } edgestruct;
+  nodestruct nodes[4];
+  edgestruct edges[3];
+  // generated from graph structure
+  int node001fn(int i) {
+    int result = 0;
+    // process step 1
+    result = 1;
+    // process step 2
 
-    // generated from graph structure
-    int node001fn(int i) {
-        int result = 0;
-        // process step 1
-        result = 1;
-        // process step 2
-        await (nodes[i].int_data)ms;
-        return result;
-    }
-    int node002fn(int i) {
-        int result = 0;
-        // process step 1
-        result = 0;
-        // process step 2
-        await (nodes[i].int_data)ms;
-        return result;
-    }
+    return result;
+  }
+  int node002fn(int i) {
+    int result = 0;
+    // process step 1
+    result = 0;
+    // process step 2
+
+    return result;
+  }
+  int node003fn(int i) {
+    int result = 0;
+    // process step 1
+    result = 0;
+    // process step 2
+
+    return result;
+  }
+
+
+  void init_graph() {
+    //nodes
+    nodes[0].n_type = 'd';
+    nodes[0].int_data = 250;
+    nodes[1].n_type = 'p';
+    nodes[1].ptf = node001fn;
+    nodes[2].n_type = 'p';
+    nodes[2].ptf = node002fn;
+    nodes[3].n_type = 'o';
+    nodes[3].ptf = node003fn;
+    //edges
+  }
+  
+  // boilerplate code generic to any graph
+  nodestruct get_node (int i) {
+    return nodes[i];
+  }
+  edgestruct* get_edge (int i) {
+    return &edges[i];
+  }
+
 end
 
-// generated section from graph structure
-var _nodestruct[4] nodes;
-var _edgestruct[6] edges;
-//nodes
-nodes[0].n_type = 'd';
-nodes[0].data = 250;
-nodes[1].n_type = 'p';
-nodes[1].ptf = _node001fn;
-nodes[2].n_type = 'p';
-nodes[2].ptf = _node002fn;
-nodes[3].n_type = 'o';
-nodes[3].ptf = _node003fn;
-//edges
 
 
 
 par do
     loop do
+        // service edges
         var int edge_id = await edge;
+        var _edgestruct *?e;
+        e = _get_edge(edge_id);
+        // run edge
+        emit edge_return => 1;
+        
     end
 with
     loop do
-        await 250ms;
+        // service nodes
+        var int node_id = await node;
         emit edge => 1;  // triggers 'edge'
+        var int result = await edge_return;
     end
 end
+
