@@ -1,0 +1,41 @@
+#include "arduino.ceu"
+
+
+event void N01; // procedure 1 (get data and set out and set data)
+event void N02; // procedure 2 (get data and set out and set data)
+event void N03; // data
+event void N04; // out
+
+event str E01_GET;
+event int E01_GOT;
+event str E02_GET;
+event int E02_GOT;
+
+_pinMode(13, _OUTPUT);
+_pinMode(15, _OUTPUT);
+_digitalWrite(15, _LOW);
+
+par do
+    loop do
+        _digitalWrite(13, _HIGH);
+        await (dt)ms;
+        _digitalWrite(13, _LOW);
+        await (dt)ms;
+    end
+with
+    loop do
+        var int light = _analogRead(0);
+        if light < 1000 && light > 20 then
+          dt = light;
+        end
+        await 200ms;
+    end
+with
+    loop do
+        var int light = _analogRead(0);
+        if light < 1000 && light > 20 then
+          dt = light;
+        end
+        await 200ms;
+    end
+end

@@ -60,7 +60,7 @@ native do
     nodes[3].ptf = node003fn;
     //edges
   }
-  
+
   // boilerplate code generic to any graph
   nodestruct get_node (int i) {
     return nodes[i];
@@ -73,7 +73,6 @@ end
 
 
 
-
 par do
     loop do
         // service edges
@@ -82,7 +81,6 @@ par do
         e = _get_edge(edge_id);
         // run edge
         emit edge_return => 1;
-        
     end
 with
     loop do
@@ -93,3 +91,5 @@ with
     end
 end
 
+_init_graph();
+emit node => 1;
